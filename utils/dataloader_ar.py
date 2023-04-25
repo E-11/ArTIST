@@ -25,18 +25,18 @@ class dataloader:
             current_batch_motion = np.zeros((self.batch_size, seq_len, 4))
             current_image_wh = torch.zeros((self.batch_size, 2))
             social_list_h = []
-            for batch in range(self.batch_size):
+            for batch in range(self.batch_size):  ## for each sequence
 
                 while True:
-                    dir = random.choice(list(self.dataset.keys()))
-                    selected_seq = random.choice(list(self.dataset[dir]['tracklets'].keys()))
+                    dir = random.choice(list(self.dataset.keys()))  ## eg. "MOT17-02-FRCNN"
+                    selected_seq = random.choice(list(self.dataset[dir]['tracklets'].keys()))  ## tracklet id
                     len_selected_seq = len(self.dataset[dir]['tracklets'][selected_seq]['sequence'])
                     if len_selected_seq > seq_len + 1:
                         break
 
                 # select a random time
                 offset = np.random.randint(0, len_selected_seq - seq_len)
-                sequence = self.dataset[dir]['tracklets'][selected_seq]['sequence']
+                sequence = self.dataset[dir]['tracklets'][selected_seq]['sequence']  ## sequence of a tracklet
                 current_batch_motion[batch, :] = sequence[offset: offset + seq_len]
 
                 current_image_wh[batch, 0] = int(self.dataset[dir]['imWidth'])
@@ -47,12 +47,12 @@ class dataloader:
                 start_frame = int(self.dataset[dir]['tracklets'][selected_seq]['start']) + offset
                 end_frame = int(self.dataset[dir]['tracklets'][selected_seq]['start']) + offset + seq_len
                 social_dict = {}
-                for sid in social_ids:
+                for sid in social_ids:  ## other objects ocurred in the same frame
                     start_s = self.dataset[dir]['tracklets'][sid]['start']
                     end_s = self.dataset[dir]['tracklets'][sid]['end']
                     SEQ = np.zeros((seq_len, 4))
                     START, END = -1, -1
-
+                    ## 取两条轨迹重叠部分的sequence，用于计算social
                     if start_s == start_frame and end_frame == end_s:
                         SEQ = self.dataset[dir]['tracklets'][sid]['sequence'][0:-1]
                         START = start_s
@@ -113,8 +113,8 @@ class dataloader:
                 with torch.no_grad():
                      social_vel = social_vel.float().cuda()
                      try:
-                         h = self.model_ae.inference(social_vel)
-                         h = torch.max(h, dim=0)[0].unsqueeze(0)
+                         h = self.model_ae.inference(social_vel)  ## (track_num, track_len, 256)
+                         h = torch.max(h, dim=0)[0].unsqueeze(0)  ## (1, track_len, 256)
                      except:
                          h = torch.zeros(1, seq_len, 256).float().cuda()
                 social_list_h.append(h)

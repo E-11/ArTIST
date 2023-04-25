@@ -41,7 +41,7 @@ def prepare_data(data_path='data/MOT17Labels', split='train'):
                         tracklets[int(items[1])]['start'] = int(items[0])
                         tracklets[int(items[1])]['end'] = int(items[0])
                         current_id = int(items[1])
-                    if int(items[0]) - tracklets[current_id]['end'] > 1:
+                    if int(items[0]) - tracklets[current_id]['end'] > 1:  ## 轨迹消失后又重新出现，视为一条新的轨迹
                         current_id = max_id + 1
                         max_id += 1
                         if current_id not in tracklets:
@@ -57,14 +57,14 @@ def prepare_data(data_path='data/MOT17Labels', split='train'):
             data_dict[seq]['tracklets'] = tracklets
 
 
-    for key, value in data_dict.items():
-        for key_t, value_t in value['tracklets'].items():
+    for key, value in data_dict.items():  ## {seq: {...}}
+        for key_t, value_t in value['tracklets'].items():  ## 统计与某条轨迹重叠的轨迹
             id = key_t
             start = value_t['start']
             end = value_t['end']
             for key_s, value_s in value['tracklets'].items():
                 if key_s != key_t:
-                    if start<=start<=value_s['end'] <= end:
+                    if value_s['start']<=start<=value_s['end'] <= end:
                         value_t['social_ids'].append(key_s)
                     if start<=value_s['start'] <= end:
                         value_t['social_ids'].append(key_s)
